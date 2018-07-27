@@ -22,7 +22,7 @@
   Safe
   #-}
 
-module Semicategory.ImplicitSemimonoidal (
+module Semicategory.Semimonoidal (
   type Unit
   ,
   type Either(..)
@@ -42,9 +42,9 @@ module Semicategory.ImplicitSemimonoidal (
   Cocartesian(..)
   ) where
 
-import Semicategory.ImplicitSemicategory
-import Semicategory.ImplicitCategory
-import Semicategory.ImplicitTerminal
+import Semicategory.Semicategory
+import Semicategory.Category
+import Semicategory.Terminal
 
 import Data.Either (Either(..), either)
 import Data.Void (Void)

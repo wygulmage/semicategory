@@ -20,13 +20,13 @@
   Safe
   #-}
 
-module Semicategory.ImplicitCategory (
-  module Semicategory.ImplicitSemicategory
+module Semicategory.Category (
+  module Semicategory.Semicategory
   ,
   Category(..)
   ) where
 
-import Semicategory.ImplicitSemicategory
+import Semicategory.Semicategory
 
 class Semicategory c ⇒ Category c where
   id :: c x x

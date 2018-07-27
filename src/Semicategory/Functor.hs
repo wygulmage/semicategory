@@ -28,11 +28,11 @@
   GADTs
   #-}
 
-module Semicategory.ImplicitFunctor
+module Semicategory.Functor
   where
 
-import Semicategory.ImplicitCategory
-import Semicategory.ImplicitSemimonoidal
+import Semicategory.Category
+import Semicategory.Semimonoidal
 -- import Category.Flip
 -- import Data.Kind (Type)
 import Prelude (Either(..))

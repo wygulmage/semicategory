@@ -22,9 +22,9 @@
   Safe
   #-}
 
-module Semicategory.ImplicitTerminal where
+module Semicategory.Terminal where
 
-import Semicategory.ImplicitSemicategory
+import Semicategory.Semicategory
 
 import Data.Void (Void, absurd)
 
