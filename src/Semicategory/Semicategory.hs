@@ -39,6 +39,10 @@ module Semicategory.Semicategory (
   ,
   Semicategory(..)
   ,
+  Category(..)
+  ,
+  Groupoid(..)
+  ,
   EveryObject
   ,
   type Semicats(..)
@@ -60,13 +64,6 @@ data Iso (c :: Arrow1 o) x y = Iso { un :: c y x, run :: c x y }
 
 newtype Flip (c :: i → j → Type) x y = Flip { unFlip :: c y x }
 
-
--- type family Opposite (c :: i → j → k) :: j → i → k where
---   Opposite (Iso c) = Iso c
---   Opposite (Flip c) = c
---   Opposite c = Flip c
-
-
 flipIso :: Flip c ~ Opposite c ⇒ Iso c x y → Iso (Flip c) x y
 flipIso (Iso u r) = Iso (Flip r) (Flip u)
 
@@ -75,17 +72,38 @@ instance EveryObject o
 
 class Semicategory (c :: Arrow1 o) where
   type Object c :: o → Constraint
-  type Object c = EveryObject -- allow everything by default
   type Opposite c :: Arrow1 o
-  type Opposite c = Flip c
   opposite :: c x y → Opposite c y x
-  default opposite :: Opposite c ~ Flip c ⇒ c x y → Opposite c y x
-  opposite = Flip
   (>>>) :: c x y → c y z → c x z
   (<<<) :: c y z → c x y → c x z
   (>>>) f = (<<< f)
   (<<<) f = (>>> f)
+  -- Defaults:
+  type Object c = EveryObject -- Allow everything.
+  type Opposite c = Flip c
+  default opposite :: Opposite c ~ Flip c ⇒ c x y → Opposite c y x
+  opposite = Flip
 
+class Semicategory c ⇒ Category (c :: Arrow1 o) where
+  source :: c x y → c x x
+  target :: c x y → c y y
+
+class Category c ⇒ Groupoid (c :: Arrow1 o) where
+  invert :: c x y → c y x
+  default invert :: c ~ Opposite c ⇒ c x y → c y x
+  invert = opposite -- The opposite groupoid is the same groupoid (possibly with some name changes).
+
+
+----- Examples -----
+
+
+--- Isos in a Semicategory: The 'Core' ---
+
+instance Semicategory c ⇒ Groupoid (Iso c)
+
+instance Semicategory c ⇒ Category (Iso c) where
+  source (Iso u r) = Iso (u <<< r) (r >>> u)
+  target (Iso u r) = Iso (u >>> r) (r <<< u)
 
 instance Semicategory c ⇒ Semicategory (Iso c) where
   type Object (Iso c) = Object c
@@ -94,24 +112,41 @@ instance Semicategory c ⇒ Semicategory (Iso c) where
   Iso u1 r1 >>> Iso u2 r2 = Iso (u1 <<< u2) (r1 >>> r2)
 
 
+--- Flipped Semicategories and Categories ---
+
+instance (Category c, Flip c ~ Opposite c) ⇒ Category (Flip c) where
+  source (Flip a) = Flip (target a)
+  target (Flip a) = Flip (source a)
+
 instance (Semicategory c, Flip c ~ Opposite c) ⇒ Semicategory (Flip c) where
   type Object (Flip c) = Object c
   type Opposite (Flip c) = c
   opposite = unFlip
   Flip a >>> Flip b = Flip (a <<< b)
 
+--- Pair Groupoid ---
 
---- Examples ---
+instance Groupoid (,)
+
+instance Category (,) where
+  source (s, _) = (s, s)
+  target (_, t) = (t, t)
+
+instance Semicategory (,) where
+  type Opposite (,) = (,)
+  opposite (l, r) = (r, l)
+  (l, _) >>> (_, r) = (l, r)
+
+--- 'Category' of Haskell Functions ---
+
+instance Category (→) where
+  source _ s = s
+  target _ t = t
 
 instance Semicategory (→) where
   type Object (→) = EveryObject
   (f <<< g) x = f (g x)
 
-instance Semicategory (,) where
-  type Object (,) = EveryObject
-  type Opposite (,) = (,)
-  opposite (l, r) = (r, l)
-  (l, _) >>> (_, r) = (l, r)
 
 
 --- Product Semicategory ---
