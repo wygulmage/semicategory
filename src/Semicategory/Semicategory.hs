@@ -161,8 +161,12 @@ newtype Semicats c d x x' = Semicats { getSemicats :: (c (Fst x) (Fst x'), d (Sn
 type family Fst (x :: (l, r)) :: l where Fst '(l, r) = l
 type family Snd (x :: (l, r)) :: r where Snd '(l, r) = r
 
-class (Object c (Fst x), Object d (Snd x)) ⇒ SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
-instance (Object c (Fst x), Object d (Snd x)) ⇒ SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
+class
+  (Object c (Fst x), Object d (Snd x)) ⇒
+  SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
+instance
+  (Object c (Fst x), Object d (Snd x)) ⇒
+  SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
 -- Great, but how do you create such an object?
 
 data Pair :: (Type, Type) → Type where

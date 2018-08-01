@@ -38,17 +38,20 @@ class Semicategory c ⇒ Coterminal (c :: Arrow1 o) where
   coterminalArrow :: c (CoterminalObject c) x
 
 
+----- Examples -----
+
+--- Opposite Categories ---
+
 instance (Terminal c, Flip c ~ Opposite c) ⇒ Coterminal (Flip c) where
   type CoterminalObject (Flip c) = TerminalObject c
   coterminalArrow = Flip terminalArrow
-
 
 instance (Coterminal c, Flip c ~ Opposite c) ⇒ Terminal (Flip c) where
   type TerminalObject (Flip c) = CoterminalObject c
   terminalArrow = Flip coterminalArrow
 
 
---- Examples ---
+--- Functions ---
 
 instance Terminal (→) where
   type TerminalObject (→) = ()
