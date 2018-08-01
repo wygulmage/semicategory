@@ -22,7 +22,15 @@
   Safe
   #-}
 
-module Semicategory.Terminal where
+module Semicategory.Terminal (
+  Terminal(..)
+  ,
+  Coterminal(..)
+  ,
+  idT
+  ,
+  idS
+  ) where
 
 import Semicategory.Semicategory
 
@@ -32,11 +40,17 @@ class Semicategory c ⇒ Terminal (c :: Arrow1 o) where
   type TerminalObject c :: o
   terminalArrow :: c x (TerminalObject c)
 
+-- Reconstruct ∀ x. id x from source and terminal arrow:
+idS :: (Category c, Terminal c) ⇒ c x x
+idS = source terminalArrow
 
 class Semicategory c ⇒ Coterminal (c :: Arrow1 o) where
   type CoterminalObject c :: o
   coterminalArrow :: c (CoterminalObject c) x
 
+-- Reconstruct ∀ x. id x from target and coterminal arrow:
+idT :: (Category c, Coterminal c) ⇒ c x x
+idT = target coterminalArrow
 
 ----- Examples -----
 
