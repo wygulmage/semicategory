@@ -73,8 +73,8 @@ instance (Category c, Flip c ~ Opposite c) ⇒ Functor c (NT (Flip c) (→)) (Fl
 instance (Category c, Flip c ~ Opposite c) ⇒ Functor (Flip c) (→) (Flip c k) where
   fmap = (◃)
 
------ Examples -----
 
+----- Examples -----
 
 --- Functions ---
 
@@ -88,10 +88,7 @@ instance Functor (→) (→) ((→) k) where
 -- (rather than using the category of pairs)
 
 instance (Category c, Cartesian c (,)) ⇒ Functor c (NT c (→)) (,) where
-  -- fmap :: c l l' → NT c (→) ((,) l) ((,) l')
-  -- fmap a = NT (a <.> (target snd))
   fmap a = NT ((fst ▹ a) &&& snd)
 
 instance (Category c, Cartesian c (,)) ⇒ Functor c (→) ((,) k) where
-  fmap :: c r r' → c (k, r) (k, r')
   fmap a = (fst &&& (a ◃ snd))

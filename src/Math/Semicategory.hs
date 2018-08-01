@@ -77,24 +77,23 @@ class Semicategory c ⇒ Category (c :: Arrow1 o) where
   source :: c x y → c x x
   target :: c x y → c y y
 -- Laws:
--- source ◃ source ≡ source
--- target ◃ source ≡ source
--- target ◃ target ≡ target
--- source ◃ target ≡ target
--- source ◃ (a ◃ b) ≡ source a
--- target ◃ (a ◃ b) ≡ target b
--- a ◃ (source a) ≡ a
--- (target a) ◃ a ≡ a
+-- source ◃ source = source
+-- target ◃ source = source
+-- target ◃ target = target
+-- source ◃ target = target
+-- source ◃ (a ◃ b) = source a
+-- target ◃ (a ◃ b) = target b
+-- a ◃ (source a) = a
+-- (target a) ◃ a = a
 
 -- Note: Category is single-sorted at the value level because this allows the definition of categories that a polymorphic 'id'-based class would not allow (e.g. isomorphisms in a semigroup, the pair category).
 
 
 class Category c ⇒ Groupoid c where
   invert :: c x y → c y x
-
 -- Laws:
--- ∀ a. invert a ◃ a ≡ target a
--- ∀ a. a ◃ invert a ≡ source a
+-- ∀ a. invert a ◃ a = target a
+-- ∀ a. a ◃ invert a = source a
 
 
 --- Flip the Arrows ---
