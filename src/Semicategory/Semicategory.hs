@@ -37,8 +37,6 @@ module Semicategory.Semicategory (
   ,
   flipIso
   ,
-  type Opposite
-  ,
   Semicategory(..)
   ,
   EveryObject
@@ -63,10 +61,10 @@ data Iso (c :: Arrow1 o) x y = Iso { un :: c y x, run :: c x y }
 newtype Flip (c :: i → j → Type) x y = Flip { unFlip :: c y x }
 
 
-type family Opposite (c :: i → j → k) :: j → i → k where
-  Opposite (Iso c) = Iso c
-  Opposite (Flip c) = c
-  Opposite c = Flip c
+-- type family Opposite (c :: i → j → k) :: j → i → k where
+--   Opposite (Iso c) = Iso c
+--   Opposite (Flip c) = c
+--   Opposite c = Flip c
 
 
 flipIso :: Flip c ~ Opposite c ⇒ Iso c x y → Iso (Flip c) x y
@@ -78,6 +76,8 @@ instance EveryObject o
 class Semicategory (c :: Arrow1 o) where
   type Object c :: o → Constraint
   type Object c = EveryObject -- allow everything by default
+  type Opposite c :: Arrow1 o
+  type Opposite c = Flip c
   opposite :: c x y → Opposite c y x
   default opposite :: Opposite c ~ Flip c ⇒ c x y → Opposite c y x
   opposite = Flip
@@ -89,12 +89,14 @@ class Semicategory (c :: Arrow1 o) where
 
 instance Semicategory c ⇒ Semicategory (Iso c) where
   type Object (Iso c) = Object c
+  type Opposite (Iso c) = Iso c
   opposite (Iso u r) = Iso r u
   Iso u1 r1 >>> Iso u2 r2 = Iso (u1 <<< u2) (r1 >>> r2)
 
 
 instance (Semicategory c, Flip c ~ Opposite c) ⇒ Semicategory (Flip c) where
   type Object (Flip c) = Object c
+  type Opposite (Flip c) = c
   opposite = unFlip
   Flip a >>> Flip b = Flip (a <<< b)
 
@@ -107,6 +109,8 @@ instance Semicategory (→) where
 
 instance Semicategory (,) where
   type Object (,) = EveryObject
+  type Opposite (,) = (,)
+  opposite (l, r) = (r, l)
   (l, _) >>> (_, r) = (l, r)
 
 
@@ -139,6 +143,8 @@ pairToFn (Pair (x, y)) f = f x y
 
 instance (Semicategory c, Semicategory d) ⇒ Semicategory (Semicats c d) where
   type Object (Semicats c d) = SemicatsObject c d
+  type Opposite (Semicats c d) = Semicats (Opposite c) (Opposite d)
+  opposite (Semicats (a, b)) = Semicats (opposite a, opposite b)
   Semicats (f, g) >>> Semicats (f', g') = Semicats (f >>> f', g >>> g')
 
 -- data Cats' :: Arrow1 Type → Arrow1 Type → Arrow1 Type where
