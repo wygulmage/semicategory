@@ -3,6 +3,8 @@
   ,
   UnicodeSyntax
   ,
+  ScopedTypeVariables
+  ,
   ExplicitNamespaces
   ,
   TypeInType
@@ -43,7 +45,7 @@ module Semicategory.Semimonoidal (
   ) where
 
 import Semicategory.Semicategory
-import Semicategory.Category
+-- import Semicategory.Category
 import Semicategory.Terminal
 
 import Data.Either (Either(..), either)
@@ -74,9 +76,9 @@ class (Monoidal c p, Terminal c, Unit p ~ TerminalObject c) ⇒ Semicartesian c 
   fst :: c (p l r) l
   snd :: c (p l r) r
   default fst :: Category c ⇒ c (p l r) l
-  fst = un unitR <<< (id <.> terminalArrow)
+  fst = un unitR <<< (source terminalArrow <.> terminalArrow)
   default snd :: Category c ⇒ c (p l r) r
-  snd = un unitL <<< (terminalArrow <.> id)
+  snd = un unitL <<< (terminalArrow <.> source terminalArrow)
 
 
 --- Inject in any element ---
@@ -84,18 +86,22 @@ class (Monoidal c p, Coterminal c, Unit p ~ CoterminalObject c) ⇒ Semicocartes
   inL :: c l (p l r)
   inR :: c r (p l r)
   default inL :: Category c ⇒ c l (p l r)
-  inL = run unitR >>> (id <.> coterminalArrow)
+  inL = run unitR >>> (target coterminalArrow <.> coterminalArrow)
   default inR :: Category c ⇒ c r (p l r)
-  inR = run unitL >>> (coterminalArrow <.> id)
+  inR = run unitL >>> (coterminalArrow <.> target coterminalArrow)
 
 
 --- Has 'all' finite universal products or coproducts ---
 
 class Semicartesian c p ⇒ Cartesian c p where
   (&&&) :: c x l → c x r → c x (p l r)
+  diagonal :: c x (p x x)
 
 class Semicocartesian c p ⇒ Cocartesian c p where
   (|||) :: c l x → c r x → c (p l r) x
+  codiagonal :: c (p x x) x
+  default codiagonal :: Category c ⇒ c (p x x) x
+  codiagonal = target coterminalArrow ||| target coterminalArrow
 
 
 ----- Examples -----
@@ -104,9 +110,11 @@ class Semicocartesian c p ⇒ Cocartesian c p where
 
 instance (Cocartesian c p, Flip c ~ Opposite c) ⇒ Cartesian (Flip c) p where
   Flip a &&& Flip b = Flip (a ||| b)
+  diagonal = Flip codiagonal
 
 instance (Cartesian c p, Flip c ~ Opposite c) ⇒ Cocartesian (Flip c) p where
   Flip a ||| Flip b = Flip (a &&& b)
+  codiagonal = Flip diagonal
 
 instance (Semicocartesian c p, Flip c ~ Opposite c) ⇒ Semicartesian (Flip c) p where
   fst = Flip inL
@@ -140,6 +148,7 @@ instance Semimonoidal c p ⇒ Semimonoidal (Iso c) p where
 
 instance Cartesian (→) (,) where
   (f &&& g) x = (f x, g x)
+  diagonal x = (x, x)
 
 instance Semicartesian (→) (,) where
   fst (l, _) = l
@@ -148,10 +157,10 @@ instance Semicartesian (→) (,) where
 instance Monoidal (→) (,) where
   unitL = Iso
     snd
-    (terminalArrow &&& id)
+    (terminalArrow &&& source terminalArrow)
   unitR = Iso
     fst
-    (id &&& terminalArrow)
+    (source terminalArrow &&& terminalArrow)
 
 instance Semimonoidal (→) (,) where
   f <.> g = (fst >>> f) &&& (g <<< snd)
@@ -164,6 +173,8 @@ instance Semimonoidal (→) (,) where
 
 instance Cocartesian (→) Either where
   (|||) = either
+  codiagonal (Left x) = x
+  codiagonal (Right x) = x
 
 instance Semicocartesian (→) Either where
   inL = Left
@@ -171,10 +182,10 @@ instance Semicocartesian (→) Either where
 
 instance Monoidal (→) Either where
   unitL = Iso
-    (coterminalArrow ||| id)
+    (coterminalArrow ||| target coterminalArrow)
     inR
   unitR = Iso
-    (id ||| coterminalArrow)
+    (target coterminalArrow ||| coterminalArrow)
     inL
 
 instance Semimonoidal (→) Either where
