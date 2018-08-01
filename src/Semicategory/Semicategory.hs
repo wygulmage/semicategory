@@ -74,10 +74,12 @@ class Semicategory (c :: Arrow1 o) where
   type Object c :: o → Constraint
   type Opposite c :: Arrow1 o
   opposite :: c x y → Opposite c y x
-  (>>>) :: c x y → c y z → c x z
-  (<<<) :: c y z → c x y → c x z
-  (>>>) f = (<<< f)
-  (<<<) f = (>>> f)
+  (▹), (>>>) :: c x y → c y z → c x z
+  (◃), (<<<) :: c y z → c x y → c x z
+  (▹) a = (◃ a) -- '▹' and '◃' are used as knot operators,
+  (◃) a = (▹ a) -- but I wanted something prettier than
+  (>>>) = (▹)   --- '>>>' while remaning directional.
+  (<<<) = (◃)
   -- Defaults:
   type Object c = EveryObject -- Allow everything.
   type Opposite c = Flip c
@@ -102,14 +104,14 @@ class Category c ⇒ Groupoid (c :: Arrow1 o) where
 instance Semicategory c ⇒ Groupoid (Iso c)
 
 instance Semicategory c ⇒ Category (Iso c) where
-  source (Iso u r) = Iso (u <<< r) (r >>> u)
-  target (Iso u r) = Iso (u >>> r) (r <<< u)
+  source (Iso u r) = Iso (u ◃ r) (r ▹ u)
+  target (Iso u r) = Iso (u ▹ r) (r ◃ u)
 
 instance Semicategory c ⇒ Semicategory (Iso c) where
   type Object (Iso c) = Object c
   type Opposite (Iso c) = Iso c
   opposite (Iso u r) = Iso r u
-  Iso u1 r1 >>> Iso u2 r2 = Iso (u1 <<< u2) (r1 >>> r2)
+  Iso u1 r1 ▹ Iso u2 r2 = Iso (u1 ◃ u2) (r1 ▹ r2)
 
 
 --- Flipped Semicategories and Categories ---
@@ -122,7 +124,7 @@ instance (Semicategory c, Flip c ~ Opposite c) ⇒ Semicategory (Flip c) where
   type Object (Flip c) = Object c
   type Opposite (Flip c) = c
   opposite = unFlip
-  Flip a >>> Flip b = Flip (a <<< b)
+  Flip a ▹ Flip b = Flip (a ◃ b)
 
 --- Pair Groupoid ---
 
@@ -135,7 +137,7 @@ instance Category (,) where
 instance Semicategory (,) where
   type Opposite (,) = (,)
   opposite (l, r) = (r, l)
-  (l, _) >>> (_, r) = (l, r)
+  (l, _) ▹ (_, r) = (l, r)
 
 --- 'Category' of Haskell Functions ---
 
@@ -145,7 +147,7 @@ instance Category (→) where
 
 instance Semicategory (→) where
   type Object (→) = EveryObject
-  (f <<< g) x = f (g x)
+  (f ◃ g) x = f (g x)
 
 
 
@@ -184,7 +186,7 @@ instance (Semicategory c, Semicategory d) ⇒ Semicategory (Semicats c d) where
   type Object (Semicats c d) = SemicatsObject c d
   type Opposite (Semicats c d) = Semicats (Opposite c) (Opposite d)
   opposite (Semicats (a, b)) = Semicats (opposite a, opposite b)
-  Semicats (f, g) >>> Semicats (f', g') = Semicats (f >>> f', g >>> g')
+  Semicats (f, g) ▹ Semicats (f', g') = Semicats (f ▹ f', g ▹ g')
 
 -- data Cats' :: Arrow1 Type → Arrow1 Type → Arrow1 Type where
 --   Cats' :: c x x' → d y y' → Cats' c d (x, y) (x', y')
