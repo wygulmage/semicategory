@@ -26,16 +26,22 @@ module Math.Semicategory (
   Iso(..)
   ,
   Flip(..)
+  -- ,
+  -- Opposite
   ,
-  Opposite
+  Category(..)
+  ,
+  Groupoid(..)
   ) where
 
 import Data.Kind (
-  -- Constraint
-  -- ,
+  Constraint
+  ,
   Type
   )
-import Math.Opposite
+-- import Math.Opposite
+import Data.Flip
+import Math.Iso
 
 type Arrow1 o = o -> o -> Type
 
@@ -50,7 +56,10 @@ type Arrow1 o = o -> o -> Type
 
 
 class Semicategory (c :: Arrow1 k) where
-  -- type Object c :: k -> Constraint
+  type Object c :: k -> Constraint
+  type Object c = EveryObject
+  type Opposite c :: Arrow1 k
+  type Opposite c = Flip c
   opposite :: c x y -> Opposite c y x
   default opposite :: (Opposite c ~ Flip c) => c x y -> Opposite c y x
   opposite = Flip
@@ -67,7 +76,6 @@ class Semicategory (c :: Arrow1 k) where
 class Semicategory c ⇒ Category (c :: Arrow1 o) where
   source :: c x y → c x x
   target :: c x y → c y y
-
 -- Laws:
 -- source ◃ source ≡ source
 -- target ◃ source ≡ source
@@ -77,6 +85,8 @@ class Semicategory c ⇒ Category (c :: Arrow1 o) where
 -- target ◃ (a ◃ b) ≡ target b
 -- a ◃ (source a) ≡ a
 -- (target a) ◃ a ≡ a
+
+-- Note: Category is single-sorted at the value level because this allows the definition of categories that a polymorphic 'id'-based class would not allow (e.g. isomorphisms in a semigroup, the pair category).
 
 
 class Category c ⇒ Groupoid c where
@@ -90,7 +100,8 @@ class Category c ⇒ Groupoid c where
 --- Flip the Arrows ---
 
 instance (Semicategory c, Opposite c ~ Flip c) ⇒ Semicategory (Flip c) where
-  -- type Object (Flip c) = Object c
+  type Object (Flip c) = Object c
+  type Opposite (Flip c) = c
   opposite :: Flip c x y → c y x
   opposite = unFlip
   Flip f ◃ Flip g = Flip (f ▹ g)
@@ -106,7 +117,8 @@ instance (Groupoid c, Opposite c ~ Flip c) ⇒ Groupoid (Flip c) where
 --- Cores ---
 
 instance Semicategory c ⇒ Semicategory (Iso c) where
-  -- type Object (Iso c) = Object c
+  type Object (Iso c) = Object c
+  type Opposite (Iso c) = Iso c
   opposite (Iso u r) = Iso r u
   Iso u1 r1 ▹ Iso u2 r2 = Iso (u1 ◃ u2) (r1 ▹ r2)
 
@@ -138,6 +150,8 @@ instance Category (→) where
 
 instance Semicategory (,) where
   -- type Object (,) = EveryObject
+  type Opposite (,) = (,)
+  opposite (x, y) = (y, x)
   (l, _) ▹ (_, r) = (l, r)
 
 instance Category (,) where
@@ -145,7 +159,7 @@ instance Category (,) where
   target (_, y) = (y, y)
 
 instance Groupoid (,) where
-  invert (x, y) = (y, x)
+  invert = opposite
 
 
 ----- RULES -----
