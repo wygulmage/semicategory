@@ -26,8 +26,6 @@ module Math.Semicategory (
   Iso(..)
   ,
   Flip(..)
-  -- ,
-  -- Opposite
   ,
   Category(..)
   ,
@@ -39,29 +37,18 @@ import Data.Kind (
   ,
   Type
   )
--- import Math.Opposite
 import Data.Flip
 import Math.Iso
 
-type Arrow1 o = o -> o -> Type
+type Arrow1 o = o → o → Type
 
--- newtype Flip (c :: Arrow1 o) y x = Flip { unFlip :: c x y }
-
--- data Iso (c :: Arrow1 o) x y = Iso { un :: c y x, run :: c x y }
-
--- type family Opposite (c :: Arrow1 o) :: Arrow1 o where
---   Opposite (Iso c) = Iso c -- no need for another wrapper
---   Opposite (Flip c) = c
---   Opposite c = Flip c
-
-
-class Semicategory (c :: Arrow1 k) where
-  type Object c :: k -> Constraint
+class Semicategory (c :: Arrow1 o) where
+  type Object c :: o → Constraint
   type Object c = EveryObject
-  type Opposite c :: Arrow1 k
+  type Opposite c :: Arrow1 o
   type Opposite c = Flip c
-  opposite :: c x y -> Opposite c y x
-  default opposite :: (Opposite c ~ Flip c) => c x y -> Opposite c y x
+  opposite :: c x y → Opposite c y x
+  default opposite :: (Opposite c ~ Flip c) => c x y → Opposite c y x
   opposite = Flip
   (▹) :: c x y → c y z → c x z
   f ▹ g = g ◃ f
@@ -89,7 +76,7 @@ class Semicategory c ⇒ Category (c :: Arrow1 o) where
 -- Note: Category is single-sorted at the value level because this allows the definition of categories that a polymorphic 'id'-based class would not allow (e.g. isomorphisms in a semigroup, the pair category).
 
 
-class Category c ⇒ Groupoid c where
+class Category c ⇒ Groupoid (c :: Arrow1 o) where
   invert :: c x y → c y x
 -- Laws:
 -- ∀ a. invert a ◃ a = target a
@@ -137,7 +124,6 @@ instance EveryObject o
 --- Functions ---
 
 instance Semicategory (→) where
-  -- type Object (→) = EveryObject
   (f ◃ g) x = f (g x)
 
 instance Category (→) where
@@ -148,7 +134,6 @@ instance Category (→) where
 --- Tuple Groupoid ---
 
 instance Semicategory (,) where
-  -- type Object (,) = EveryObject
   type Opposite (,) = (,)
   opposite (x, y) = (y, x)
   (l, _) ▹ (_, r) = (l, r)
@@ -163,6 +148,7 @@ instance Groupoid (,) where
 
 ----- RULES -----
 -- 'Good work-around with no obviously better design' for built-in method inlining rules, courtesy of the master himself (https://ghc.haskell.org/trac/ghc/ticket/10595):
+-- Probably these will destroy everthing as soon as you try to use IO, possibly sooner.
 
 __RULE__compose__ :: Semicategory c ⇒ c y z → c x y → c x z
 __RULE__compose__ = (◃)
