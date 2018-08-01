@@ -9,18 +9,26 @@
   ,
   TypeFamilies
   ,
+  MultiParamTypeClasses
+  ,
   FlexibleInstances
   ,
   FlexibleContexts
   ,
   DefaultSignatures
   ,
+  UndecidableInstances -- CatsObject
+  ,
+  UndecidableSuperClasses -- CatsObject
+  ,
   GADTs
+  ,
+  TypeOperators
   ,
   Safe
   #-}
 
-module Semicategory.ImplicitSemicategory (
+module Semicategory.Semicategory (
   type Arrow1
   ,
   Iso(..)
@@ -34,6 +42,14 @@ module Semicategory.ImplicitSemicategory (
   Semicategory(..)
   ,
   EveryObject
+  ,
+  type Semicats(..)
+  ,
+  SemicatsObject
+  ,
+  Pair(..)
+  ,
+  Fst, Snd
   ) where
 
 import Data.Kind (Type, Constraint)
@@ -92,3 +108,38 @@ instance Semicategory (→) where
 instance Semicategory (,) where
   type Object (,) = EveryObject
   (l, _) >>> (_, r) = (l, r)
+
+
+--- Product Semicategory ---
+
+-- data Semicats (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r)) (x' :: (l, r)) where
+--   Semicats ::
+--     (Semicategory c, Semicategory d) ⇒
+--     { getSemicats :: (c (Fst x) (Fst x'), d (Snd x) (Snd x')) } → Semicats c d x x'
+
+newtype Semicats c d x x' = Semicats { getSemicats :: (c (Fst x) (Fst x'), d (Snd x) (Snd x')) }
+
+type family Fst (x :: (l, r)) :: l where Fst '(l, r) = l
+type family Snd (x :: (l, r)) :: r where Snd '(l, r) = r
+
+class (Object c (Fst x), Object d (Snd x)) ⇒ SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
+instance (Object c (Fst x), Object d (Snd x)) ⇒ SemicatsObject (c :: Arrow1 l) (d :: Arrow1 r) (x :: (l, r))
+-- Great, but how do you create such an object?
+
+data Pair :: (Type, Type) → Type where
+  Pair :: (x, y)  → Pair '(x, y)
+
+pairToFn :: Pair '(x, y) → (x → y → z) → z
+pairToFn (Pair (x, y)) f = f x y
+
+-- data UncurriedProduct (p :: i → j → Type) :: (i, j) → Type where
+--   ????
+
+-- type family Uncurry (x :: i → j → k) :: (i, j) → k where Uncurry
+
+instance (Semicategory c, Semicategory d) ⇒ Semicategory (Semicats c d) where
+  type Object (Semicats c d) = SemicatsObject c d
+  Semicats (f, g) >>> Semicats (f', g') = Semicats (f >>> f', g >>> g')
+
+-- data Cats' :: Arrow1 Type → Arrow1 Type → Arrow1 Type where
+--   Cats' :: c x x' → d y y' → Cats' c d (x, y) (x', y')
