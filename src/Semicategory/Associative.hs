@@ -8,6 +8,8 @@
   ,
   ConstraintKinds
   ,
+  ConstrainedClassMethods
+  ,
   DefaultSignatures
   #-}
 
@@ -71,8 +73,9 @@ import Data.Void (Void, absurd)
 import Data.Maybe (Maybe(..))
 import Data.Bool (Bool(..))
 import Numeric.Natural (Natural)
+import Prelude (Integer)
 import qualified Prelude (Eq(..))
-import qualified Prelude ((+), (*), (&&),(||))
+import qualified Prelude ((+), (*), (-), (&&), (||), min, max, (<=))
 
 if' :: Bool → x → x → x
 if' True t _ = t
@@ -96,9 +99,9 @@ class HasZero a ⇒ RightCancellative a where
   (-) :: a → a → a
   default (-) :: Negatable a ⇒ a → a → a
   x - y = x + neg y
-  (-?) :: a → a → Maybe a
-  default (-?) :: Prelude.Eq a ⇒ a → a → Maybe a
-  x -? y = if' (dif Prelude.== zero) Nothing (Just dif) where dif = x - y
+  -- (-?) :: a → a → Maybe a
+  -- default (-?) :: Prelude.Eq a ⇒ a → a → Maybe a
+  -- x -? y = if' (dif Prelude.== zero) Nothing (Just dif) where dif = x - y
 
 class HasZero a ⇒ LeftCancellative a where
   subtract :: a → a → a
@@ -342,5 +345,48 @@ instance HasOne Bool where one = top
 instance Associative Natural where
   (+) = (Prelude.+)
 
-instance HasZero Natural where
-  zero = 0
+instance HasZero Natural where zero = 0
+
+instance RightCancellative Natural where
+  (-) = (Prelude.-)
+
+instance LeftCancellative Natural where
+  subtract x y = y - x
+
+instance Distributive Natural where
+  (*) = (Prelude.*)
+
+instance HasOne Natural where one = 1
+
+instance Lattice Natural where
+  (\/) = Prelude.max
+  (/\) = Prelude.min
+
+instance HasBottom Natural where bot = zero
+
+
+--- Integers ---
+
+instance Associative Integer where
+  (+) = (Prelude.+)
+
+instance HasZero Integer where zero = 0
+
+instance RightCancellative Integer where
+  (-) = (Prelude.-)
+
+instance LeftCancellative Integer where
+  subtract x y = y - x
+
+instance Negatable Integer where
+  neg x = -x
+
+instance Distributive Integer where
+  (*) = (Prelude.*)
+
+instance HasOne Integer where
+  one = 1
+
+instance Lattice Integer where
+  (\/) = Prelude.max
+  (/\) = Prelude.min
