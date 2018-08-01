@@ -76,9 +76,9 @@ class (Monoidal c p, Terminal c, Unit p ~ TerminalObject c) ⇒ Semicartesian c 
   fst :: c (p l r) l
   snd :: c (p l r) r
   default fst :: Category c ⇒ c (p l r) l
-  fst = un unitR <<< (source terminalArrow <.> terminalArrow)
+  fst = un unitR <<< (idS <.> terminalArrow)
   default snd :: Category c ⇒ c (p l r) r
-  snd = un unitL <<< (terminalArrow <.> source terminalArrow)
+  snd = un unitL <<< (terminalArrow <.> idS)
 
 
 --- Inject in any element ---
@@ -86,9 +86,9 @@ class (Monoidal c p, Coterminal c, Unit p ~ CoterminalObject c) ⇒ Semicocartes
   inL :: c l (p l r)
   inR :: c r (p l r)
   default inL :: Category c ⇒ c l (p l r)
-  inL = run unitR >>> (target coterminalArrow <.> coterminalArrow)
+  inL = run unitR >>> (idT <.> coterminalArrow)
   default inR :: Category c ⇒ c r (p l r)
-  inR = run unitL >>> (coterminalArrow <.> target coterminalArrow)
+  inR = run unitL >>> (coterminalArrow <.> idT)
 
 
 --- Has 'all' finite universal products or coproducts ---
@@ -101,7 +101,7 @@ class Semicocartesian c p ⇒ Cocartesian c p where
   (|||) :: c l x → c r x → c (p l r) x
   codiagonal :: c (p x x) x
   default codiagonal :: Category c ⇒ c (p x x) x
-  codiagonal = target coterminalArrow ||| target coterminalArrow
+  codiagonal = idT ||| idT
 
 
 ----- Examples -----
@@ -157,10 +157,10 @@ instance Semicartesian (→) (,) where
 instance Monoidal (→) (,) where
   unitL = Iso
     snd
-    (terminalArrow &&& source terminalArrow)
+    (terminalArrow &&& idS)
   unitR = Iso
     fst
-    (source terminalArrow &&& terminalArrow)
+    (idS &&& terminalArrow)
 
 instance Semimonoidal (→) (,) where
   f <.> g = (fst >>> f) &&& (g <<< snd)
@@ -182,10 +182,10 @@ instance Semicocartesian (→) Either where
 
 instance Monoidal (→) Either where
   unitL = Iso
-    (coterminalArrow ||| target coterminalArrow)
+    (coterminalArrow ||| idT)
     inR
   unitR = Iso
-    (target coterminalArrow ||| coterminalArrow)
+    (idT ||| coterminalArrow)
     inL
 
 instance Semimonoidal (→) Either where

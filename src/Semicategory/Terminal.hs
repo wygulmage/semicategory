@@ -52,6 +52,7 @@ class Semicategory c ⇒ Coterminal (c :: Arrow1 o) where
 idT :: (Category c, Coterminal c) ⇒ c x x
 idT = target coterminalArrow
 
+
 ----- Examples -----
 
 --- Opposite Categories ---
