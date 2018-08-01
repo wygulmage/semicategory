@@ -42,7 +42,7 @@ Monoidal
 Premonoidal
 -}
 
--- |The unit of the monoidal product is factored out to make it easier to define the flipped instances.
+-- |The unit of the monoidal product is factored out to make the flipped instances easier to define.
 type family Unit (p :: o → o → o) :: o -- unit of a monoidal product
 type instance Unit (,) = ()
 type instance Unit Either = Void
@@ -89,16 +89,16 @@ class (Monoidal c p, Terminal c, Unit p ~ TerminalObject c) ⇒ Semicartesian c 
   snd :: c (p l r) r
   default fst :: Category c ⇒ c (p l r) l
   default snd :: Category c ⇒ c (p l r) r
-  fst = un unitR ◃ (id ⊙ terminalArrow)
-  snd = un unitL ◃ (terminalArrow ⊙ id)
+  fst = un unitR ◃ (idS ⊙ terminalArrow)
+  snd = un unitL ◃ (terminalArrow ⊙ idS)
 
 class (Monoidal c p, Coterminal c, Unit p ~ CoterminalObject c) ⇒ Semicocartesian c p where
   inL :: c l (p l r)
   inR :: c r (p l r)
   default inL :: Category c ⇒ c l (p l r)
   default inR :: Category c ⇒ c r (p l r)
-  inL = run unitR ▹ (id ⊙ coterminalArrow)
-  inR = run unitL ▹ (coterminalArrow ⊙ id)
+  inL = run unitR ▹ (idT ⊙ coterminalArrow)
+  inR = run unitL ▹ (coterminalArrow ⊙ idT)
 
 instance (Semicartesian c p, Flip c ~ Opposite c) ⇒ Semicocartesian (Flip c) p where
   inL = Flip fst
@@ -132,8 +132,8 @@ instance Semicartesian (→) (,) where
   snd (_, r) = r
 
 instance Monoidal (→) (,) where
-  unitL = Iso snd (terminalArrow △ id)
-  unitR = Iso fst (id △ terminalArrow)
+  unitL = Iso snd (terminalArrow △ idS)
+  unitR = Iso fst (idS △ terminalArrow)
 
 instance Semimonoidal (→) (,) where
   f ⊙ g = (fst ▹ f) △ (g ◃ snd)
@@ -150,8 +150,8 @@ instance Semicocartesian (→) Either where
   inR = Right
 
 instance Monoidal (→) Either where
-  unitL = Iso (coterminalArrow ▽ id) inR
-  unitR = Iso (id ▽ coterminalArrow) inL
+  unitL = Iso (coterminalArrow ▽ idT) inR
+  unitR = Iso (idT ▽ coterminalArrow) inL
 
 instance Semimonoidal (→) Either where
   f ⊙ g = (inL ◃ f) ▽ (g ▹ inR)
