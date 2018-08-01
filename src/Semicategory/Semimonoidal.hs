@@ -76,9 +76,9 @@ class (Monoidal c p, Terminal c, Unit p ~ TerminalObject c) ⇒ Semicartesian c 
   fst :: c (p l r) l
   snd :: c (p l r) r
   default fst :: Category c ⇒ c (p l r) l
-  fst = un unitR <<< (idS <.> terminalArrow)
+  fst = un unitR ◃ (idS <.> terminalArrow)
   default snd :: Category c ⇒ c (p l r) r
-  snd = un unitL <<< (terminalArrow <.> idS)
+  snd = un unitL ◃ (terminalArrow <.> idS)
 
 
 --- Inject in any element ---
@@ -86,22 +86,28 @@ class (Monoidal c p, Coterminal c, Unit p ~ CoterminalObject c) ⇒ Semicocartes
   inL :: c l (p l r)
   inR :: c r (p l r)
   default inL :: Category c ⇒ c l (p l r)
-  inL = run unitR >>> (idT <.> coterminalArrow)
+  inL = run unitR ▹ (idT <.> coterminalArrow)
   default inR :: Category c ⇒ c r (p l r)
-  inR = run unitL >>> (coterminalArrow <.> idT)
+  inR = run unitL ▹ (coterminalArrow <.> idT)
 
 
 --- Has 'all' finite universal products or coproducts ---
 
 class Semicartesian c p ⇒ Cartesian c p where
-  (&&&) :: c x l → c x r → c x (p l r)
+  (△), (&&&) :: c x l → c x r → c x (p l r)
+  (△) = (&&&) -- up pointing white triangle suggested by Conal Elliott,
+  (&&&) = (△) -- presumably to represent the triangular diagram
   diagonal :: c x (p x x)
+  default diagonal :: Category c ⇒ c x (p x x)
+  diagonal = idS △ idS
 
 class Semicocartesian c p ⇒ Cocartesian c p where
-  (|||) :: c l x → c r x → c (p l r) x
+  (▽), (|||) :: c l x → c r x → c (p l r) x
+  (▽) = (|||) -- down pointing white triangle suggested by Conal Elliott,
+  (|||) = (▽) -- presumably to represent the triangular diagram
   codiagonal :: c (p x x) x
   default codiagonal :: Category c ⇒ c (p x x) x
-  codiagonal = idT ||| idT
+  codiagonal = idT ▽ idT
 
 
 ----- Examples -----
@@ -109,11 +115,11 @@ class Semicocartesian c p ⇒ Cocartesian c p where
 --- Opposite (Pre-)Category ---
 
 instance (Cocartesian c p, Flip c ~ Opposite c) ⇒ Cartesian (Flip c) p where
-  Flip a &&& Flip b = Flip (a ||| b)
+  Flip a △ Flip b = Flip (a ▽ b)
   diagonal = Flip codiagonal
 
 instance (Cartesian c p, Flip c ~ Opposite c) ⇒ Cocartesian (Flip c) p where
-  Flip a ||| Flip b = Flip (a &&& b)
+  Flip a ▽ Flip b = Flip (a △ b)
   codiagonal = Flip diagonal
 
 instance (Semicocartesian c p, Flip c ~ Opposite c) ⇒ Semicartesian (Flip c) p where
@@ -147,8 +153,7 @@ instance Semimonoidal c p ⇒ Semimonoidal (Iso c) p where
 --- Cartesian Product ---
 
 instance Cartesian (→) (,) where
-  (f &&& g) x = (f x, g x)
-  diagonal x = (x, x)
+  (f △ g) x = (f x, g x)
 
 instance Semicartesian (→) (,) where
   fst (l, _) = l
@@ -157,13 +162,13 @@ instance Semicartesian (→) (,) where
 instance Monoidal (→) (,) where
   unitL = Iso
     snd
-    (terminalArrow &&& idS)
+    (terminalArrow △ idS)
   unitR = Iso
     fst
-    (idS &&& terminalArrow)
+    (idS △ terminalArrow)
 
 instance Semimonoidal (→) (,) where
-  f <.> g = (fst >>> f) &&& (g <<< snd)
+  f <.> g = (fst ▹ f) △ (g ◃ snd)
   assoc = Iso
     (\(x, (y, z)) → ((x, y), z))
     (\((x, y), z) → (x, (y, z)))
@@ -172,9 +177,7 @@ instance Semimonoidal (→) (,) where
 --- Disjoint Union ---
 
 instance Cocartesian (→) Either where
-  (|||) = either
-  codiagonal (Left x) = x
-  codiagonal (Right x) = x
+  (▽) = either
 
 instance Semicocartesian (→) Either where
   inL = Left
@@ -182,14 +185,14 @@ instance Semicocartesian (→) Either where
 
 instance Monoidal (→) Either where
   unitL = Iso
-    (coterminalArrow ||| idT)
+    (coterminalArrow ▽ idT)
     inR
   unitR = Iso
-    (idT ||| coterminalArrow)
+    (idT ▽ coterminalArrow)
     inL
 
 instance Semimonoidal (→) Either where
-  f <.> g = (inL <<< f) ||| (g >>> inR)
+  f <.> g = (inL ◃ f) ▽ (g ▹ inR)
   assoc = Iso
-    ((inL <<< inL) ||| ((inL <<< inR) ||| inR))
-    ((inL ||| (inL >>> inR)) ||| (inR >>> inR))
+    ((inL ◃ inL) ▽ ((inL ◃ inR) ▽ inR))
+    ((inL ▽ (inL ▹ inR)) ▽ (inR ▹ inR))
