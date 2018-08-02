@@ -28,7 +28,7 @@ module Math.Logic (
   Join(..)
   ) where
 
-import Math.Monoid
+import Math.Semigroup
 
 import Data.Kind (Type)
 
@@ -91,7 +91,7 @@ instance Preorder Int where
 --- Partial Order ---
 class Preorder p ⇒ PartialOrder p
 -- Laws:
--- ∀ x y. x ≤ y ∧ y ≤ x = x ≣ y
+-- ∀ x y. x ≤ y ∧ y ≤ x = x ≡ y
 
 class PartialOrder l ⇒ Lattice l where
   (∧), (∨) :: l → l → l
@@ -125,19 +125,19 @@ instance LowerBounded l ⇒ Monoid (Join l) where
 
 --- Equivalence ---
 class Equivalence e where
-  (≣) :: e → e → Logic e
+  (≡) :: e → e → Logic e
 
 instance Equivalence e ⇒ Equivalence (x → e) where
-  (f ≣ g) x = f x ≣ g x
+  (f ≡ g) x = f x ≡ g x
 
 instance Equivalence Bool where
-  (≣) = (Prelude.==)
+  (≡) = (Prelude.==)
 
 instance Equivalence Natural where
-  (≣) = (Prelude.==)
+  (≡) = (Prelude.==)
 
 instance Equivalence Integer where
-  (≣) = (Prelude.==)
+  (≡) = (Prelude.==)
 
 instance Equivalence Int where
-  (≣) = (Prelude.==)
+  (≡) = (Prelude.==)
