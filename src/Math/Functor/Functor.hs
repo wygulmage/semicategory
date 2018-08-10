@@ -27,33 +27,45 @@
   GADTs
   ,
   UndecidableSuperClasses
+  ,
+  FunctionalDependencies
   #-}
 
 module Math.Functor.Functor where
 
 import Data.Kind (Type, Constraint)
+import Data.Either (Either(..), either)
+import qualified Data.List (map)
 
+
+-- Arrows in a category:
 type Arrow1 i = i → i → Type
 
+-- Flipped arrows:
 newtype Flip :: (i → j → Type) → j → i → Type where
   Flip :: {unFlip :: f x y} → Flip f y x
 
+-- Opposite arrows:
 type family Opposite (f :: i → j → Type) :: j → i → Type where
   Opposite (Flip f) = f
   Opposite f = Flip f
 
+-- Natural transformations:
 data NT :: ∀ i j. Arrow1 i → Arrow1 j → Arrow1 (i → j) where
   NT ::
     (Functor d c f, Functor d c g) ⇒
     {runNT :: ∀ (x :: i). c (f x) (g x)}
     → NT d c f g
 
+-- Functors:
 class
   (Category d, Category c) ⇒
   Functor (d :: Arrow1 i) (c :: Arrow1 j) (f :: i → j)
+  | f d → c
   where
   fmap :: d x y → c (f x) (f y)
 
+-- Categories:
 class
   Functor (Opposite c) (NT c (→)) c ⇒
   Category (c :: Arrow1 i)
@@ -76,16 +88,16 @@ class
 
 -- natural transformations:
 
+instance Category (NT d c) where
+  source = source
+  target = target
+  NT b ◃ NT a = NT (b ◃ a)
+
 instance Functor (Flip (NT d c)) (NT (NT d c) (→)) (NT d c) where
   fmap (Flip (NT a)) = NT (\(NT b) → NT (b ◃ a))
 
 instance Functor (NT d c) (→) (NT d c f) where
   fmap = (◃)
-
-instance Category (NT d c) where
-  source = source
-  target = target
-  NT b ◃ NT a = NT (b ◃ a)
 
 
 -- flipped arrows:
@@ -115,3 +127,21 @@ instance Functor (Flip (→)) (NT (→) (→)) (→) where
 
 instance Functor (→) (→) ((→) x) where
   fmap = (◃)
+
+
+--- Instances I'd Rather Not Put Here But Which Would Otherwise Be Orphans ---
+
+instance Functor (→) (NT (→) (→)) (,) where
+  fmap a = NT (\(x, k) → (a x, k))
+
+instance Functor (→) (→) ((,) k) where
+  fmap a (k, y) = (k, a y)
+
+instance Functor (→) (NT (→) (→)) Either where
+  fmap a = NT (either (Left ◃ a) Right)
+
+instance Functor (→) (→) (Either k) where
+  fmap a = either Left (Right ◃ a)
+
+instance Functor (→) (→) [] where
+  fmap = Data.List.map
