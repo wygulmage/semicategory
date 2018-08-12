@@ -54,7 +54,7 @@ instance Functor (Iso c) (→) (Iso c k) where
 instance Functor d c f ⇒ Functor (Iso d) (Iso c) f where
   fmap (Iso u r) = Iso (fmap u) (fmap r)
 
-instance Functor d1 (NT d2 c) f ⇒ Functor (Iso d1) (NT (Iso d2) (Iso c)) f where
+instance Bifunctor d1 d2 c f ⇒ Functor (Iso d1) (NT (Iso d2) (Iso c)) f where
   fmap (Iso u r) = case (map u, map r) of
     (NT t, NT s) → NT (Iso t s)
     where
