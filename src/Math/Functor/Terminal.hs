@@ -14,7 +14,17 @@
   UndecidableSuperClasses
   #-}
 
-module Math.Functor.Terminal where
+module Math.Functor.Terminal (
+  Terminal(..)
+  ,
+  Coterminal(..)
+  ,
+  idS
+  ,
+  idT
+  ,
+  module Math.Functor.Functor
+  ) where
 
 import Math.Functor.Functor
 import Data.Void (Void, absurd)
