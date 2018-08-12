@@ -1,6 +1,8 @@
 {-# LANGUAGE
   UnicodeSyntax
   ,
+  NoImplicitPrelude
+  ,
   TypeInType
   ,
   GADTSyntax
