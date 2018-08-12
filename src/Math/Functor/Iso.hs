@@ -4,7 +4,6 @@
   NoImplicitPrelude
   ,
   TypeInType
-  -- PolyKinds
   ,
   ScopedTypeVariables
   ,
@@ -12,32 +11,31 @@
   ,
   RankNTypes
   ,
-  ConstraintKinds
-  ,
-  TypeOperators
-  ,
   MultiParamTypeClasses
   ,
   FlexibleContexts
   ,
   FlexibleInstances
   ,
-  DefaultSignatures
-  ,
   GADTs
   ,
   UndecidableSuperClasses
-  ,
-  FunctionalDependencies
   #-}
 
-module Math.Functor.Iso where
+module Math.Functor.Iso (
+  Iso(..)
+  ,
+  isoFlip
+  ) where
 
 import Math.Functor.Functor
 import Math.Functor.Terminal
 
 data Iso :: ∀ i. Arrow1 i → Arrow1 i where
   Iso :: Category c ⇒ { un :: c y x, run :: c x y} → Iso c x y
+
+isoFlip :: (Opposite c ~ Flip c) ⇒ Iso c u r → Iso (Flip c) u r
+isoFlip (Iso u r) = Iso (Flip r) (Flip u)
 
 instance Category (Iso c) where
   type Opposite (Iso c) = Iso c
@@ -52,6 +50,16 @@ instance Functor (Iso c) (NT (Iso c) (→)) (Iso c) where
 
 instance Functor (Iso c) (→) (Iso c k) where
   fmap = (◃)
+
+instance Functor d c f ⇒ Functor (Iso d) (Iso c) f where
+  fmap (Iso u r) = Iso (fmap u) (fmap r)
+
+instance Functor d1 (NT d2 c) f ⇒ Functor (Iso d1) (NT (Iso d2) (Iso c)) f where
+  fmap (Iso u r) = case (map u, map r) of
+    (NT t, NT s) → NT (Iso t s)
+    where
+      map :: d1 x y → NT d2 c (f x) (f y)
+      map = fmap
 
 instance (Terminal c, Coterminal c, Ob1 c ~ Ob0 c) ⇒ Terminal (Iso c) where
   type Ob1 (Iso c) = Ob1 c
