@@ -40,12 +40,15 @@ data Iso :: ∀ i. Arrow1 i → Arrow1 i where
   Iso :: Category c ⇒ { un :: c y x, run :: c x y} → Iso c x y
 
 instance Category (Iso c) where
+  type Opposite (Iso c) = Iso c
+  opposite (Iso u r) = Iso r u
+  unOpposite = opposite
   source (Iso u r) = Iso (target u) (source r)
   target (Iso u r) = Iso (source u) (target r)
   Iso u2 r2 ◃ Iso u1 r1 = Iso (u1 ◃ u2) (r2 ◃ r1)
 
-instance Functor (Flip (Iso c)) (NT (Iso c) (→)) (Iso c) where
-  fmap (Flip a) = NT (◃ a)
+instance Functor (Iso c) (NT (Iso c) (→)) (Iso c) where
+  fmap a = NT (◃ opposite a)
 
 instance Functor (Iso c) (→) (Iso c k) where
   fmap = (◃)
