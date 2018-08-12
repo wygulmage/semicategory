@@ -39,10 +39,38 @@ module Math.Functor.Monoidal (
   ) where
 
 import Math.Functor.Terminal
-import Math.Functor.Semimonoidal
 import Math.Functor.Unit
 import Math.Functor.Iso
 import Data.Either (Either(..), either)
+
+
+class Bifunctor c c c f ⇒ Semimonoidal c f where
+  (⊗) :: Semimonoidal c f ⇒ c x x' → c y y' → c (f x y) (f x' y')
+  (⊗) = bimap
+  assoc :: Iso c (f (f x y) z) (f x (f y z))
+
+assocCartesian :: Cartesian c f ⇒ Iso c (f (f x y) z) (f x (f y z))
+assocCartesian = Iso
+  ((fst △ fst ◃ snd) △ snd ◃ snd)
+  (fst ◃ fst △ (snd ◃ fst △ snd))
+
+assocCocartesian :: Cocartesian c f ⇒ Iso c (f (f x y) z) (f x (f y z))
+assocCocartesian = Iso
+  (inL ◃ inL ▽ (inL ◃ inR ▽ inR))
+  ((inL ▽ inR ◃ inL) ▽ inR ◃ inR)
+
+instance
+  (Bifunctor (Iso c) (Iso c) (Iso c) f, Semimonoidal c f) ⇒
+  Semimonoidal (Iso c) f
+  where
+  Iso uL rL ⊗ Iso uR rR = Iso (uL ⊗ uR) (rL ⊗ rR)
+  assoc = Iso (opposite assoc) assoc
+
+instance Semimonoidal (→) (,) where
+  assoc = assocCartesian
+
+instance Semimonoidal (→) Either where
+  assoc = assocCocartesian
 
 class Semimonoidal c f ⇒ Monoidal c f where
   unitL :: Iso c x (f (Unit f) x)
@@ -101,9 +129,6 @@ instance Monoidal (→) (,) where
 instance Monoidal (→) Either where
   unitL = Iso (\(Right x) → x) Right
   unitR = Iso (\(Left x) → x) Left
-  -- assoc = Iso
-    -- (Left ◃ Left ▽ (Left ◃ Right ▽ Right))
-    -- ((Left ▽ Right ◃ Left) ▽ Right ◃ Right)
 
 instance Cartesian (→) (,) where
   (a △ b) x = (a x, b x)
@@ -112,8 +137,8 @@ instance Cocartesian (→) Either where
   (▽) = either
 
 
---- Semicartesian and Semicocartesian as classes:
 
+--- Semicartesian and Semicocartesian as classes:
 
 -- class (Monoidal c f, Terminal c, Unit f ~ Ob1 c) ⇒ Semicartesian c f where
 --   fst :: c (f x k) x
