@@ -31,22 +31,32 @@
   FunctionalDependencies
   #-}
 
-module Math.Functor.Functor where
+module Math.Functor.Functor (
+  type Arrow1
+  ,
+  Flip(..)
+  ,
+  NT(..)
+  ,
+  Category(..)
+  ,
+  Functor(..)
+  ) where
 
 import Data.Kind (Type, Constraint)
+import Math.Flip (Flip(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Either (Either(..), either)
 import qualified Data.List (map)
 import Control.Applicative (Const(..))
 import Data.Functor.Identity (Identity(..))
 
+-- Note on organization: Because there are a lot of mutual (sometimes circular) dependencies, this can't use a 1 class per module approach. Each module should contain only mutually dependent things, plus the occasional type alias or utility function. Given the option, a type's class instances are defined with the type rather than the class. For examples, the Category and Functor instances for Iso are in Math.Functor.Iso. But because Monoidal categories are defined with isomorphisms, the Iso instance of Monoidal is in Math.Functor.Monoidal.
+-- With fine-grained class hierarchies, it becomes very important to have nice defaults. But with defaults taken from subclasses, the mutual dependencies multiply…
 
 -- Arrows in a category:
 type Arrow1 i = i → i → Type
-
--- Flipped arrows:
-newtype Flip :: (i → j → Type) → j → i → Type where
-  Flip :: {unFlip :: f x y} → Flip f y x
+-- These are arrows between objects: '1-arrows', hence 'Arrow1'. Not to be confused with 'arrow1', the arrow to the terminal object.
 
 -- Natural transformations:
 data NT :: ∀ i j. Arrow1 i → Arrow1 j → Arrow1 (i → j) where
