@@ -65,7 +65,7 @@ class
 
 -- Categories:
 class
-  Functor (Opposite c) (NT c (→)) c ⇒
+  (Functor (Opposite c) (NT c (→)) c, c ~ Opposite (Opposite c)) ⇒
   Category (c :: Arrow1 i)
   where
   type Opposite c :: Arrow1 i
