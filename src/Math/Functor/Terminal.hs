@@ -4,31 +4,14 @@
   NoImplicitPrelude
   ,
   TypeInType
-  -- PolyKinds
-  ,
-  ScopedTypeVariables
   ,
   TypeFamilies
-  ,
-  RankNTypes
-  ,
-  ConstraintKinds
-  ,
-  TypeOperators
-  ,
-  MultiParamTypeClasses
   ,
   FlexibleContexts
   ,
   FlexibleInstances
   ,
-  DefaultSignatures
-  ,
-  GADTs
-  ,
   UndecidableSuperClasses
-  ,
-  FunctionalDependencies
   #-}
 
 module Math.Functor.Terminal where
@@ -36,12 +19,12 @@ module Math.Functor.Terminal where
 import Math.Functor.Functor
 import Data.Void (Void, absurd)
 
-class Category c ⇒ Terminal c where
-  type Ob1 c
+class Category c ⇒ Terminal (c :: Arrow1 i) where
+  type Ob1 c :: i
   arrow1 :: c x (Ob1 c)
 
-class Category c ⇒ Coterminal c where
-  type Ob0 c
+class Category c ⇒ Coterminal (c :: Arrow1 i) where
+  type Ob0 c :: i
   arrow0 :: c (Ob0 c) x
 
 idS :: Terminal c ⇒ c x x
