@@ -4,7 +4,6 @@
   NoImplicitPrelude
   ,
   TypeInType
-  -- PolyKinds
   ,
   ScopedTypeVariables
   ,
@@ -41,6 +40,10 @@ module Math.Functor.Functor (
   Category(..)
   ,
   Functor(..)
+  ,
+  type Bifunctor, bimap
+  ,
+  type Profunctor, dimap
   ) where
 
 import Data.Kind (Type, Constraint)
@@ -69,13 +72,15 @@ data NT :: ∀ i j. Arrow1 i → Arrow1 j → Arrow1 (i → j) where
 class
   (Category d, Category c) ⇒
   Functor (d :: Arrow1 i) (c :: Arrow1 j) (f :: i → j)
-  | f d → c
+  -- | f d → c
   where
   fmap :: d x y → c (f x) (f y)
 
 -- Categories:
 class
-  (Functor (Opposite c) (NT c (→)) c, c ~ Opposite (Opposite c)) ⇒
+  (Functor (Opposite c) (NT c (→)) c,
+   c ~ Opposite (Opposite c),
+   Category (Opposite c)) ⇒
   Category (c :: Arrow1 i)
   where
   type Opposite c :: Arrow1 i
@@ -94,6 +99,7 @@ class
   default unOpposite :: Opposite c ~ Flip c ⇒  Opposite c y x → c x y
   unOpposite = unFlip
 
+infixl 9 ◃
 
 
 ----- Instances -----
@@ -129,6 +135,17 @@ instance (Category c, Category (Flip c)) ⇒ Functor c (NT (Flip c) (→)) (Flip
 instance (Category c, Category (Flip c)) ⇒ Functor (Flip c) (→) (Flip c y) where
   fmap = (◃)
 
+instance
+  (Category c, Category (Flip c), Functor c c f) ⇒
+  Functor (Flip c) (Flip c) f where
+  fmap (Flip a) = Flip (fmap a)
+
+instance
+  (Category c, Category (Flip c), Functor c (NT c c) f) ⇒
+  Functor (Flip c) (NT (Flip c) (Flip c)) f where
+  fmap (Flip a) = case (fmap :: c x x' → NT c c (f x) (f x')) a of
+    NT t → NT (Flip t)
+
 
 -- functions:
 
@@ -146,19 +163,24 @@ instance Functor (→) (→) ((→) x) where
 
 --- Utility Functions ---
 
--- bimap ::
---   (Functor d1 (NT d2 c) f, Functor d2 c (f x')) ⇒
---   d1 x x' → d2 y y' → c (f x y) (f x' y')
--- bimap a b = fmap b ◃ runNT (fmap a)
--- bimap ::
---   Functor d1 (NT d2 c) f ⇒
---   d1 x x' → d2 y y' → c (f x y) (f x' y')
--- bimap a b = case fmap a of NT t → fmap b ◃ t
+type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
 
--- dimap ::
---   (Category d, Functor (Opposite d) (NT c (→)) f) ⇒
---   d x' x → c y y' → f x y → f x' y'
--- dimap = bimap ◃ unOpposite
+bimap ::
+  ∀ d1 d2 c f x x' y y'.
+  Bifunctor d1 d2 c f ⇒
+  d1 x x' → d2 y y' → c (f x y) (f x' y')
+bimap a b = case (fmap :: d1 x x' → NT d2 c (f x) (f x')) a
+  of NT t → fmap b ◃ t
+
+
+type Profunctor d c = Bifunctor (Opposite d) c (→)
+
+dimap ::
+  (Category d,
+   Profunctor d c f) ⇒
+   -- Functor (Opposite d) (NT c (→)) f) ⇒
+  d x' x → c y y' → f x y → f x' y'
+dimap = bimap ◃ unOpposite
 
 
 --- Instances I'd Rather Not Put Here But Which Would Otherwise Be Orphans ---
@@ -172,11 +194,8 @@ instance Functor (→) (→) Maybe where
 instance Functor (→) (→) [] where
   fmap = Data.List.map
 
+
 --- Bifunctors:
-
-type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
-
-type Profunctor d c = Bifunctor (Opposite d) c (→)
 
 instance Functor (→) (NT (→) (→)) Const where
   fmap a = NT (Const ◃ a ◃ getConst)
