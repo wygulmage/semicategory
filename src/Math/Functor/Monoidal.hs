@@ -21,6 +21,12 @@
   #-}
 
 module Math.Functor.Monoidal (
+  Semimonoidal(..)
+  ,
+  Braided(..)
+  ,
+  Symmetric(..)
+  ,
   Monoidal(..)
   ,
   Semicartesian, fst, snd
@@ -30,8 +36,6 @@ module Math.Functor.Monoidal (
   Cartesian(..)
   ,
   Cocartesian(..)
-  ,
-  module Math.Functor.Semimonoidal
   ,
   type Unit
   ,
@@ -59,18 +63,20 @@ assocCocartesian = Iso
   (inL ◃ inL ▽ (inL ◃ inR ▽ inR))
   ((inL ▽ inR ◃ inL) ▽ inR ◃ inR)
 
-instance
-  (Bifunctor (Iso c) (Iso c) (Iso c) f, Semimonoidal c f) ⇒
-  Semimonoidal (Iso c) f
-  where
-  Iso uL rL ⊗ Iso uR rR = Iso (uL ⊗ uR) (rL ⊗ rR)
-  assoc = Iso (opposite assoc) assoc
 
-instance Semimonoidal (→) (,) where
-  assoc = assocCartesian
+class Semimonoidal c f ⇒ Braided c f where
+  braid :: c (f x y) (f y x)
 
-instance Semimonoidal (→) Either where
-  assoc = assocCocartesian
+braidCartesian :: Cartesian c f ⇒ c (f x y) (f y x)
+braidCartesian = snd △ fst
+
+braidCocartesian :: Cocartesian c f ⇒ c (f x y) (f y x)
+braidCocartesian = inR ▽ inL
+
+class Braided c f ⇒ Symmetric c f where
+  swap :: c (f x y) (f y x)
+  swap = braid -- swap is an involution.
+
 
 class Semimonoidal c f ⇒ Monoidal c f where
   unitL :: Iso c x (f (Unit f) x)
@@ -95,11 +101,11 @@ inR :: Semicocartesian c f ⇒ c x (f k x)
 inR = (arrow0 ⊗ idT) ◃ run unitL
 
 
-class Semicartesian c f ⇒ Cartesian c f where
+class (Symmetric c f, Semicartesian c f) ⇒ Cartesian c f where
   (△) :: c x l → c x r → c x (f l r)
   infix 4 △
 
-class Semicocartesian c f ⇒ Cocartesian c f where
+class (Symmetric c f, Semicocartesian c f) ⇒ Cocartesian c f where
   (▽) :: c l x → c r x → c (f l r) x
   infix 4 ▽
 
@@ -108,10 +114,18 @@ class Semicocartesian c f ⇒ Cocartesian c f where
 
 --- Flipped categories:
 
-instance (Bifunctor (Flip c) (Flip c) (Flip c) f, Monoidal c f) ⇒ Monoidal (Flip c) f where
+instance (Semimonoidal c f, Flip c ~ Opposite c) ⇒ Semimonoidal (Flip c) f where
+  assoc = isoFlip assoc
+
+instance (Braided c f, Flip c ~ Opposite c) ⇒ Braided (Flip c) f where
+  braid = Flip braid
+
+instance (Symmetric c f, Flip c ~ Opposite c) ⇒ Symmetric (Flip c) f where
+  swap = Flip swap
+
+instance (Monoidal c f, Flip c ~ Opposite c) ⇒ Monoidal (Flip c) f where
   unitL = isoFlip unitL
   unitR = isoFlip unitR
-  -- assoc = isoFlip assoc
 
 instance (Cartesian c f, Opposite c ~ Flip c) ⇒ Cocartesian (Flip c) f where
   Flip a ▽ Flip b = Flip (a △ b)
@@ -122,20 +136,72 @@ instance (Cocartesian c f, Opposite c ~ Flip c) ⇒ Cartesian (Flip c) f where
 
 --- Functions:
 
+--- Cartesian product:
+
+instance Semimonoidal (→) (,) where
+  assoc = assocCartesian
+
+instance Braided (→) (,) where
+  braid = braidCartesian
+
+instance Symmetric (→) (,)
+
 instance Monoidal (→) (,) where
   unitL = Iso (\(_,x)→x) ((,) ())
   unitR = Iso (\(x,_)→x) (\x→(x,()))
+
+instance Cartesian (→) (,) where
+  (a △ b) x = (a x, b x)
+
+--- Disjoint union:
+
+instance Semimonoidal (→) Either where
+  assoc = assocCocartesian
+
+instance Braided (→) Either where
+  braid = braidCocartesian
+
+instance Symmetric (→) Either
 
 instance Monoidal (→) Either where
   unitL = Iso (\(Right x) → x) Right
   unitR = Iso (\(Left x) → x) Left
 
-instance Cartesian (→) (,) where
-  (a △ b) x = (a x, b x)
-
 instance Cocartesian (→) Either where
   (▽) = either
 
+--- Isomorphisms:
+
+instance
+  (Bifunctor (Iso c) (Iso c) (Iso c) f, Semimonoidal c f) ⇒
+  Semimonoidal (Iso c) f
+  where
+  Iso uL rL ⊗ Iso uR rR = Iso (uL ⊗ uR) (rL ⊗ rR)
+  assoc = Iso (opposite assoc) assoc
+
+instance
+  (Semimonoidal (Iso c) f, Braided c f) ⇒
+  Braided (Iso c) f where
+  braid = Iso braid braid
+
+instance
+  Braided (Iso c) f ⇒ Symmetric (Iso c) f
+
+instance
+  (Semimonoidal (Iso c) f, Monoidal c f) ⇒
+  Monoidal (Iso c) f where
+  unitL = Iso (opposite unitL) unitL
+  unitR = Iso (opposite unitR) unitR
+
+instance
+  (Ob1 (Iso c) ~ Ob0 (Iso c), Cartesian c f, Cocartesian c f) ⇒
+  Cartesian (Iso c) f where
+  Iso u1 r1 △ Iso u2 r2 = Iso (u1 ▽ u2) (r1 △ r2)
+
+instance
+  (Ob1 (Iso c) ~ Ob0 (Iso c), Cartesian c f, Cocartesian c f) ⇒
+  Cocartesian (Iso c) f where
+  Iso u1 r1 ▽ Iso u2 r2 = Iso (u1 △ u2) (r1 ▽ r2)
 
 
 --- Semicartesian and Semicocartesian as classes:
