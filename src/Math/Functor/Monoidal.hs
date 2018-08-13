@@ -39,6 +39,8 @@ module Math.Functor.Monoidal (
   ,
   type Unit
   ,
+  module Math.Functor.Terminal
+  ,
   module Math.Functor.Iso
   ) where
 
@@ -120,8 +122,7 @@ instance (Semimonoidal c f, Flip c ~ Opposite c) ⇒ Semimonoidal (Flip c) f whe
 instance (Braided c f, Flip c ~ Opposite c) ⇒ Braided (Flip c) f where
   braid = Flip braid
 
-instance (Symmetric c f, Flip c ~ Opposite c) ⇒ Symmetric (Flip c) f where
-  swap = Flip swap
+instance (Symmetric c f, Flip c ~ Opposite c) ⇒ Symmetric (Flip c) f
 
 instance (Monoidal c f, Flip c ~ Opposite c) ⇒ Monoidal (Flip c) f where
   unitL = isoFlip unitL
