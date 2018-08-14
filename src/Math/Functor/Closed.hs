@@ -9,6 +9,10 @@
   ,
   ConstraintKinds
   ,
+  RankNTypes
+  ,
+  ScopedTypeVariables
+  ,
   MultiParamTypeClasses
   ,
   FlexibleContexts
@@ -26,22 +30,23 @@ module Math.Functor.Closed (
   Semiclosed(..)
   ,
   Closed(..)
-  ,
-  Coclosed(..)
   ) where
 
 import Math.Functor.Monoidal
 
-class Semimonoidal c f ⇒ Semiclosed (c :: Arrow1 i) f | c → f where
+class Semimonoidal c f ⇒ Semiclosed (c :: Arrow1 i) (f :: i → i → i) | c → f where
   type Power c :: i → i → i
   curry :: Iso (→) (c (f x y) z) (c x (Power c y z))
 
-class (Semiclosed c f, Monoidal c f) ⇒ Closed c f where
+class (Semiclosed c f, Monoidal c f) ⇒ Closed (c :: Arrow1 i) (f :: i → i → i) where
   apply :: c (f (Power c x y) x) y
-
-class (Semiclosed c f, Monoidal c f) ⇒ Coclosed c f where
-  coapply :: c y (f (Power c x y) x)
-
+  apply = un curry idPower
+    where
+      unitPower :: Iso c (Power c x y) (f (Power c x y) (Unit f))
+      unitPower = unitR
+      idPower :: c (Power c x y) (Power c x y)
+      idPower = un unitPower ◃ run unitPower
+  -- apply = case unitL of Iso u r → un curry (u ◃ r)
 
 ----- Instances -----
 
