@@ -33,20 +33,24 @@ module Math.Functor.Closed (
   ) where
 
 import Math.Functor.Monoidal
+import Math.Functor.Adjoint
 
-class Semimonoidal c f ⇒ Semiclosed (c :: Arrow1 i) (f :: i → i → i) | c → f where
+class (Semimonoidal c (Tensor c))  ⇒ Semiclosed (c :: Arrow1 i) where
   type Power c :: i → i → i
-  curry :: Iso (→) (c (f x y) z) (c x (Power c y z))
+  type Tensor c ::  i → i → i
+  curry :: Iso (→) (c (Tensor c x y) z) (c x (Power c y z))
 
-class (Semiclosed c f, Monoidal c f) ⇒ Closed (c :: Arrow1 i) (f :: i → i → i) where
-  apply :: c (f (Power c x y) x) y
+class (Semiclosed c, Monoidal c (Tensor c)) ⇒ Closed (c :: Arrow1 i) where
+  apply :: c (Tensor c (Power c x y) x) y
   apply = un curry idPower
     where
-      unitPower :: Iso c (Power c x y) (f (Power c x y) (Unit f))
+      unitPower :: Iso c (Power c x y) (Tensor c (Power c x y) (Unit (Tensor c)))
       unitPower = unitR
       idPower :: c (Power c x y) (Power c x y)
       idPower = un unitPower ◃ run unitPower
   -- apply = case unitL of Iso u r → un curry (u ◃ r)
+
+instance (Semiclosed c, Monoidal c (Tensor c)) ⇒ Closed (c :: Arrow1 i)
 
 ----- Instances -----
 
@@ -63,11 +67,12 @@ class (Semiclosed c f, Monoidal c f) ⇒ Closed (c :: Arrow1 i) (f :: i → i �
 
 --- Functions:
 
-instance Semiclosed (→) (,) where
+instance Semiclosed (→) where
   type Power (→) = (→)
+  type Tensor (→) = (,)
   curry = Iso
-    (\f (x, y) → f x y)
-    (\f x y → f (x, y))
+    (\f → un adjunct f ◃ swap)
+    (\f → run adjunct (f ◃ swap))
 
-instance Closed (→) (,) where
+instance Closed (→) where
   apply (f, x) = f x
