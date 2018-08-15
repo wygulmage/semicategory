@@ -39,11 +39,7 @@ type Adj d c l r = ∀ x y. Iso (→) (d (l x) y) (c x (r y))
 
 instance Adjoint (→) (→) ((,) k) ((→) k) where
   adjunct = Iso left right where
-    -- left :: (→) x (((→) k) y) → (→) (((,) k) x) y
-    -- left = \f (k, x) → f x k
-    -- right :: (→) (((,) k) x) y → (→) x (((→) k) y)
-    -- right = \f x k → f (k, x)
     left :: (x → k → y) → (k, x) → y
     left f (k, x) = f x k
-    right :: ((k, x) → y) → x → (k → y)
+    right :: ((k, x) → y) → x → k → y
     right f x k = f (k, x)
