@@ -42,13 +42,13 @@ class (Semimonoidal c (Tensor c))  ⇒ Semiclosed (c :: Arrow1 i) where
 
 class (Semiclosed c, Monoidal c (Tensor c)) ⇒ Closed (c :: Arrow1 i) where
   apply :: c (Tensor c (Power c x y) x) y
+  -- apply = case unitL of Iso u r → un curry (u ◃ r) -- need to help the type checker a bit
   apply = un curry idPower
     where
       unitPower :: Iso c (Power c x y) (Tensor c (Power c x y) (Unit (Tensor c)))
       unitPower = unitR
       idPower :: c (Power c x y) (Power c x y)
       idPower = un unitPower ◃ run unitPower
-  -- apply = case unitL of Iso u r → un curry (u ◃ r)
 
 instance (Semiclosed c, Monoidal c (Tensor c)) ⇒ Closed (c :: Arrow1 i)
 
@@ -73,6 +73,3 @@ instance Semiclosed (→) where
   curry = Iso
     (\f → un adjunct f ◃ swap)
     (\f → run adjunct (f ◃ swap))
-
-instance Closed (→) where
-  apply (f, x) = f x
