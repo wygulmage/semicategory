@@ -24,10 +24,10 @@
   FunctionalDependencies
   #-}
 
-module Math.Functor.Adjoint where
+module Math.Category.Adjoint where
 
-import Math.Functor.Functor
-import Math.Functor.Iso
+import Math.Category.Category
+import Math.Category.Iso
 
 class
   (Functor c d l, Functor d c r) ⇒
