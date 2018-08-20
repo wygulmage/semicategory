@@ -76,6 +76,9 @@ class
   where
   fmap :: d x y → c (f x) (f y)
 
+-- Laws:
+-- fmap b ◃ fmap a = fmap (b ◃ a)
+
 
 type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
 
@@ -86,7 +89,7 @@ bimap ::
   Bifunctor d1 d2 c f ⇒
   d1 x x' → d2 y y' → c (f x y) (f x' y')
 bimap a b = case (fmap :: d1 x x' → NT d2 c (f x) (f x')) a of
-  NT fmapa → fmap b ◃ fmapa
+  NT fmapped_a → fmap b ◃ fmapped_a
 
 
 type Profunctor d c = Bifunctor (Opposite d) c (→)
@@ -124,6 +127,16 @@ class
 
 infixl 9 ◃
 
+-- Laws:
+-- a ◃ (b ◃ c) = (a ◃ b) ◃ c
+-- target a ◃ a = a
+-- a ◃ source a = a
+-- target (target a) = target a
+-- source (target a) = target a
+-- source (source a) = source a
+-- target (source a) = source a
+-- opposite (opposite a) = a -- but note that the second 'opposite' is 'opposite' in the opposite category...
+-- unOpposite (opposite a) = a
 
 ----- Instances -----
 
