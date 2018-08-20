@@ -30,7 +30,7 @@
   FunctionalDependencies
   #-}
 
-module Math.Functor.Functor (
+module Math.Category (
   type Arrow1
   ,
   Flip(..)

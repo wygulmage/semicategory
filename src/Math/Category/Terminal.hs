@@ -14,7 +14,7 @@
   UndecidableSuperClasses
   #-}
 
-module Math.Functor.Terminal (
+module Math.Category.Terminal (
   Terminal(..)
   ,
   Coterminal(..)
@@ -23,10 +23,10 @@ module Math.Functor.Terminal (
   ,
   idT
   ,
-  module Math.Functor.Functor
+  module Math.Category
   ) where
 
-import Math.Functor.Functor
+import Math.Category
 import Data.Void (Void, absurd)
 
 class Category c ⇒ Terminal (c :: Arrow1 i) where

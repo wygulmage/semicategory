@@ -18,7 +18,7 @@
   UndecidableSuperClasses
   #-}
 
-module Math.Functor.Unit (
+module Math.Category.Unit (
   type Unit
   ) where
 

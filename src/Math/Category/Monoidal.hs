@@ -39,14 +39,14 @@ module Math.Functor.Monoidal (
   ,
   type Unit
   ,
-  module Math.Functor.Terminal
+  module Math.Category.Terminal
   ,
-  module Math.Functor.Iso
+  module Math.Category.Iso
   ) where
 
-import Math.Functor.Terminal
-import Math.Functor.Unit
-import Math.Functor.Iso
+import Math.Category.Terminal
+import Math.Category.Unit
+import Math.Category.Iso
 import Data.Either (Either(..), either)
 
 
