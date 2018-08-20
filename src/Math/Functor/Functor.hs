@@ -54,12 +54,12 @@ import qualified Data.List (map)
 import Control.Applicative (Const(..))
 import Data.Functor.Identity (Identity(..))
 
--- Note on organization: Because there are a lot of mutual (sometimes circular) dependencies, this can't use a 1 class per module approach. Each module should contain only mutually dependent things, plus the occasional type alias or utility function. Given the option, a type's class instances are defined with the type rather than the class. For examples, the Category and Functor instances for Iso are in Math.Functor.Iso. But because Monoidal categories are defined with isomorphisms, the Iso instance of Monoidal is in Math.Functor.Monoidal.
+-- Note on organization: Because there are a lot of mutual (sometimes circular) dependencies, this can't use a 1-class-per-module approach. Each module should contain only mutually dependent things, plus the occasional type alias or utility function. Given the option, a type's class instances are defined with the type rather than the class. For examples, the Category and Functor instances for Iso are in Math.Functor.Iso. But because Monoidal categories are defined with isomorphisms, the Iso instance of Monoidal is in Math.Functor.Monoidal.
 -- With fine-grained class hierarchies, it becomes very important to have nice defaults. But with defaults taken from subclasses, the mutual dependencies multiply…
 
--- Arrows in a category:
+-- Arrows between objects:
 type Arrow1 i = i → i → Type
--- These are arrows between objects: '1-arrows', hence 'Arrow1'. Not to be confused with 'arrow1', the arrow to the terminal object.
+-- These are arrows between objects: '1-arrows', hence 'Arrow1'. Not to be confused with 'arrow1', the arrow to the terminal object (needs better name?).
 
 -- Natural transformations:
 data NT :: ∀ i j. Arrow1 i → Arrow1 j → Arrow1 (i → j) where
@@ -76,28 +76,51 @@ class
   where
   fmap :: d x y → c (f x) (f y)
 
+
+type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
+
+-- type Trifunctor d1 d2 d3 c = Functor d1 (NT d2 (NT d3 c)) -- &c.
+
+bimap ::
+  ∀ d1 d2 c f x x' y y'.
+  Bifunctor d1 d2 c f ⇒
+  d1 x x' → d2 y y' → c (f x y) (f x' y')
+bimap a b = case (fmap :: d1 x x' → NT d2 c (f x) (f x')) a of
+  NT fmapa → fmap b ◃ fmapa
+
+
+type Profunctor d c = Bifunctor (Opposite d) c (→)
+
+dimap ::
+  (Category d,
+   Profunctor d c f) ⇒
+  d x' x → c y y' → f x y → f x' y'
+dimap = bimap ◃ unOpposite
+
+
 -- Categories:
 class
-  (Functor (Opposite c) (NT c (→)) c,
-   c ~ Opposite (Opposite c),
-   Category (Opposite c)) ⇒
+  (Profunctor c c c, -- Composition is a profunctor.
+   c ~ Opposite (Opposite c), -- Opposite is an involution.
+   Category (Opposite c)) ⇒ -- Every category has an opposite category where the objects are the same but the arrows are reversed.
   Category (c :: Arrow1 i)
   where
   type Opposite c :: Arrow1 i
-  type Opposite c = Flip c
+  opposite :: c x y → Opposite c y x
   source :: c x y → c x x
   target :: c x y → c y y
   (◃) :: c y z → c x y → c x z
 
-  -- (mostly) internal and defaults:
-  a ◃ b = runNT ((fmap :: Opposite c x y → NT c (→) (c x) (c y))
-                   (opposite b)) a
-  opposite :: c x y → Opposite c y x
+  -- defaults:
+  type Opposite c = Flip c
   default opposite :: Opposite c ~ Flip c ⇒ c x y → Opposite c y x
   opposite = Flip
   unOpposite :: Opposite c y x → c x y
   default unOpposite :: Opposite c ~ Flip c ⇒  Opposite c y x → c x y
   unOpposite = unFlip
+  a ◃ b = runNT ((fmap :: Opposite c x y → NT c (→) (c x) (c y))
+                   (opposite b)) a
+  -- a ◃ b = dimap
 
 infixl 9 ◃
 
@@ -160,27 +183,19 @@ instance Functor (Flip (→)) (NT (→) (→)) (→) where
 instance Functor (→) (→) ((→) x) where
   fmap = (◃)
 
+-- Category of Cartesian pairs:
 
---- Utility Functions ---
+instance Category (,) where
+  source (x, _) = (x, x)
+  target (_, y) = (y, y)
+  (_, z) ◃ (w, _) = (w, z)
 
-type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
+instance Functor (Flip (,)) (NT (,) (→)) (,) where
+  fmap (Flip a) = NT (◃ a)
 
-bimap ::
-  ∀ d1 d2 c f x x' y y'.
-  Bifunctor d1 d2 c f ⇒
-  d1 x x' → d2 y y' → c (f x y) (f x' y')
-bimap a b = case (fmap :: d1 x x' → NT d2 c (f x) (f x')) a
-  of NT t → fmap b ◃ t
+instance Functor (,) (→) ((,) k) where
+  fmap = (◃)
 
-
-type Profunctor d c = Bifunctor (Opposite d) c (→)
-
-dimap ::
-  (Category d,
-   Profunctor d c f) ⇒
-   -- Functor (Opposite d) (NT c (→)) f) ⇒
-  d x' x → c y y' → f x y → f x' y'
-dimap = bimap ◃ unOpposite
 
 
 --- Instances I'd Rather Not Put Here But Which Would Otherwise Be Orphans ---
