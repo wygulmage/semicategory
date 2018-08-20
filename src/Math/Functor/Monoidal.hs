@@ -53,7 +53,10 @@ import Data.Either (Either(..), either)
 class Bifunctor c c c f ⇒ Semimonoidal c f where
   (⊗) :: Semimonoidal c f ⇒ c x x' → c y y' → c (f x y) (f x' y')
   (⊗) = bimap
-  assoc :: Iso c (f (f x y) z) (f x (f y z))
+  -- assoc :: Iso c (f (f x y) z) (f x (f y z))
+  assocL :: c (f x (f y z)) (f x (f y z)) → c (f x (f y z)) (f (f x y) z)
+  assocR :: c (f (f x y) z) (f (f x y) z) → c (f (f x y) z) (f x (f y z))
+
 
 assocCartesian :: Cartesian c f ⇒ Iso c (f (f x y) z) (f x (f y z))
 assocCartesian = Iso
@@ -67,40 +70,58 @@ assocCocartesian = Iso
 
 
 class Semimonoidal c f ⇒ Braided c f where
-  braid :: c (f x y) (f y x)
+  -- braid :: c (f x y) (f y x)
+  braid :: c (f x y) (f x y) → c (f x y) (f y x)
 
-braidCartesian :: Cartesian c f ⇒ c (f x y) (f y x)
-braidCartesian = snd △ fst
+-- braidCartesian :: Cartesian c f ⇒ c (f x y) (f y x)
+-- braidCartesian = snd △ fst
 
-braidCocartesian :: Cocartesian c f ⇒ c (f x y) (f y x)
-braidCocartesian = inR ▽ inL
+
+-- braidCocartesian :: Cocartesian c f ⇒ c (f x y) (f y x)
+-- braidCocartesian = inR ▽ inL
 
 class Braided c f ⇒ Symmetric c f where
-  swap :: c (f x y) (f y x)
-  swap = braid -- swap is an involution.
+  -- swap :: c (f x y) (f y x)
+  swap :: c (f x y) (f x y) → c (f x y) (f y x)
+  swap = braid
 
 
 class Semimonoidal c f ⇒ Monoidal c f where
-  unitL :: Iso c x (f (Unit f) x)
-  unitR :: Iso c x (f x (Unit f))
+  unitL :: c y y → Iso c y (f (Unit f) y)
+  unitR :: c x x → Iso c x (f x (Unit f))
+  -- unitL :: Iso (→) (c x x) (c (f (Unit f) x) x)
+  -- unitR :: Iso (→) (c x x) (c x (f (Unit f) x))
+  -- unitL :: Iso c x (f (Unit f) x)
+  -- unitR :: Iso c x (f x (Unit f))
+  saavedra :: c (Unit f) (Unit f) → Iso c (Unit f) (f (Unit f) (Unit f))
 
 
-type Semicartesian c f = (Monoidal c f, Terminal c, Unit f ~ Ob1 c)
 
-fst :: Semicartesian c f ⇒ c (f x k) x
-fst = un unitR ◃ (idS ⊗ arrow1)
+class (Monoidal c f, Terminal c, Unit f ~ Ob1 c, Product c ~ f) ⇒ Semicartesian c f where
+  type Product c :: i → i → i
+  exL :: c (f x y) (f x y) → c (f x y) x
+  exR :: c (f x y) (f x y) → c (f x y) y
 
-snd :: Semicartesian c f ⇒ c (f k x) x
-snd = un unitL ◃ (arrow1 ⊗ idS)
+-- type Semicartesian c f = (Monoidal c f, Terminal c, Unit f ~ Ob1 c)
 
+-- fst :: Semicartesian c f ⇒ c (f x k) x
+-- fst = un unitR ◃ (idS ⊗ arrow1)
 
-type Semicocartesian c f = (Monoidal c f, Coterminal c, Unit f ~ Ob0 c)
+-- snd :: Semicartesian c f ⇒ c (f k x) x
+-- snd = un unitL ◃ (arrow1 ⊗ idS)
 
-inL :: Semicocartesian c f ⇒ c x (f x k)
-inL = (idT ⊗ arrow0) ◃ run unitR
+class (Monoidal c f, Coterminal c, Unit f ~ Ob0 c, Product c ~ f) ⇒ Semicocartesian c f where
+  type Sum c
+  inL :: c x x → c x (f x y)
+  inR :: c y y → c y (f x y)
 
-inR :: Semicocartesian c f ⇒ c x (f k x)
-inR = (arrow0 ⊗ idT) ◃ run unitL
+-- type Semicocartesian c f = (Monoidal c f, Coterminal c, Unit f ~ Ob0 c)
+
+-- inL :: Semicocartesian c f ⇒ c x (f x k)
+-- inL = (idT ⊗ arrow0) ◃ run unitR
+
+-- inR :: Semicocartesian c f ⇒ c x (f k x)
+-- inR = (arrow0 ⊗ idT) ◃ run unitL
 
 
 class (Symmetric c f, Semicartesian c f) ⇒ Cartesian c f where
@@ -117,16 +138,19 @@ class (Symmetric c f, Semicocartesian c f) ⇒ Cocartesian c f where
 --- Flipped categories:
 
 instance (Semimonoidal c f, Flip c ~ Opposite c) ⇒ Semimonoidal (Flip c) f where
-  assoc = isoFlip assoc
+  -- assoc = isoFlip assoc
+  assocL (Flip a) = Flip (assocR a)
+  assocR (Flip a) = Flip (assocL a)
 
 instance (Braided c f, Flip c ~ Opposite c) ⇒ Braided (Flip c) f where
-  braid = Flip braid
+  -- braid = Flip braid
+  braid (Flip a) = Flip (braid a)
 
 instance (Symmetric c f, Flip c ~ Opposite c) ⇒ Symmetric (Flip c) f
 
 instance (Monoidal c f, Flip c ~ Opposite c) ⇒ Monoidal (Flip c) f where
-  unitL = isoFlip unitL
-  unitR = isoFlip unitR
+  unitL a = isoFlip (unitL a)
+  unitR a = isoFlip (unitR a)
 
 instance (Cartesian c f, Opposite c ~ Flip c) ⇒ Cocartesian (Flip c) f where
   Flip a ▽ Flip b = Flip (a △ b)
@@ -140,10 +164,13 @@ instance (Cocartesian c f, Opposite c ~ Flip c) ⇒ Cartesian (Flip c) f where
 --- Cartesian product:
 
 instance Semimonoidal (→) (,) where
-  assoc = assocCartesian
+  -- assoc = assocCartesian
+  assocL _ (x, (y, z)) = ((x, y), z)
+  assocR _ ((x, y), z) = (x, (y, z))
 
 instance Braided (→) (,) where
-  braid = braidCartesian
+  -- braid = braidCartesian
+  braid _ (x, y) = (y x)
 
 instance Symmetric (→) (,)
 
@@ -157,7 +184,8 @@ instance Cartesian (→) (,) where
 --- Disjoint union:
 
 instance Semimonoidal (→) Either where
-  assoc = assocCocartesian
+  assocL _ = un assocCocartesian
+  assocR _ = run assocCocartesian
 
 instance Braided (→) Either where
   braid = braidCocartesian
@@ -178,7 +206,8 @@ instance
   Semimonoidal (Iso c) f
   where
   Iso uL rL ⊗ Iso uR rR = Iso (uL ⊗ uR) (rL ⊗ rR)
-  assoc = Iso (opposite assoc) assoc
+  assocL a = Iso (opposite (assocL a)) (assocL a)
+  assocR a = Iso (opposite (assocR a)) (assocR a)
 
 instance
   (Semimonoidal (Iso c) f, Braided c f) ⇒
