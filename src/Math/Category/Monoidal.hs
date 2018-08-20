@@ -20,7 +20,7 @@
   UndecidableInstances -- for Flip'd Monoidal categories
   #-}
 
-module Math.Functor.Monoidal (
+module Math.Category.Monoidal (
   Semimonoidal(..)
   ,
   Braided(..)
