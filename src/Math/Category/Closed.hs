@@ -26,14 +26,14 @@
   FunctionalDependencies
   #-}
 
-module Math.Functor.Closed (
+module Math.Category.Closed (
   Semiclosed(..)
   ,
   Closed(..)
   ) where
 
-import Math.Functor.Monoidal
-import Math.Functor.Adjoint
+import Math.Category.Monoidal
+import Math.Category.Adjoint
 
 class (Semimonoidal c (Tensor c))  ⇒ Semiclosed (c :: Arrow1 i) where
   type Power c :: i → i → i

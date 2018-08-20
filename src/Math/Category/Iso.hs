@@ -22,14 +22,14 @@
   UndecidableSuperClasses
   #-}
 
-module Math.Functor.Iso (
+module Math.Category.Iso (
   Iso(..)
   ,
   isoFlip
   ) where
 
-import Math.Functor.Functor
-import Math.Functor.Terminal
+import Math.Category.Functor
+import Math.Category.Terminal
 
 data Iso :: ∀ i. Arrow1 i → Arrow1 i where
   Iso :: Category c ⇒

@@ -79,6 +79,7 @@ class
 -- Laws:
 -- fmap b ◃ fmap a = fmap (b ◃ a)
 
+-- If I included semifunctors, would it make more sense to require that all semifunctors between categories be functors, or to require that 'instance Functor f' ('fmap = smap') be declared for each functor? The second option seems like a lot of boiler plate when I can't even think of a semifunctor between categories that I could implement...
 
 type Bifunctor d1 d2 c = Functor d1 (NT d2 c)
 
